@@ -172,36 +172,37 @@ async function createServiceTicket(interaction, content) {
         // Send the disclaimer message
         await channel.send('**PLEASE NOTE:** Prices may vary dependant on what service you require. We first need to gather more precise details before providing you with a final quote. All prices stated in the calculator are to be used as an approximate guide only.');
 
-        // Send confirmation to user - only if interaction hasn't been acknowledged yet
-        if (!interaction.replied && !interaction.deferred) {
-            try {
+        // Send confirmation to user - use try-catch to handle already acknowledged interactions
+        try {
+            if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: `Your ticket has been created in ${channel}!`,
                     ephemeral: true
                 });
-            } catch (replyError) {
-                console.error('Error replying to interaction:', replyError);
+            } else {
+                // If interaction has already been acknowledged, just log success
+                console.log(`Ticket created successfully in ${channel.name} for user ${interaction.user.tag}`);
             }
-        } else {
-            // If interaction has already been acknowledged, just log success and don't try to reply
+        } catch (replyError) {
+            // If reply fails (likely already acknowledged), just log success
             console.log(`Ticket created successfully in ${channel.name} for user ${interaction.user.tag}`);
         }
 
     } catch (error) {
         console.error('Error creating ticket:', error);
         // Only try to reply if we haven't already
-        if (!interaction.replied && !interaction.deferred) {
-            try {
+        try {
+            if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
                     content: 'There was an error creating your ticket. Please try again or contact an administrator.',
                     ephemeral: true
                 });
-            } catch (replyError) {
-                console.error('Error sending error reply:', replyError);
+            } else {
+                // If interaction has already been acknowledged, just log the error
+                console.error('Error creating ticket (interaction already acknowledged):', error);
             }
-        } else {
-            // If interaction has already been acknowledged, just log the error
-            console.error('Error creating ticket (interaction already acknowledged):', error);
+        } catch (replyError) {
+            console.error('Error sending error reply:', replyError);
         }
     }
 }
