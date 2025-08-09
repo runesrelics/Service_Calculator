@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, REST, Routes } = require('discord.js');
 const services = require('./cogs/services.js');
 const skilling = require('./cogs/skilling.js');
 
@@ -13,8 +13,35 @@ const client = new Client({
     ]
 });
 
-client.once('ready', () => {
+// Command definitions
+const commands = [
+    {
+        name: 'services',
+        description: 'Open the services calculator'
+    },
+    {
+        name: 'disclaimer',
+        description: 'Posts the service disclaimer with agree/disagree buttons (Admin/Moderator only)'
+    }
+];
+
+client.once('ready', async () => {
     console.log(`Logged in as ${client.user.tag}!`);
+    
+    // Deploy commands
+    try {
+        console.log('Started refreshing application (/) commands.');
+        const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+        
+        await rest.put(
+            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+            { body: commands }
+        );
+        
+        console.log('Successfully reloaded application (/) commands.');
+    } catch (error) {
+        console.error('Error deploying commands:', error);
+    }
 });
 
 client.on('interactionCreate', async interaction => {
