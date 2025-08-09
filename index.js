@@ -22,6 +22,10 @@ const commands = [
     {
         name: 'disclaimer',
         description: 'Posts the service disclaimer with agree/disagree buttons (Admin/Moderator only)'
+    },
+    {
+        name: 'closeticket',
+        description: 'Closes a ticket, archives it, and sends transcript to user and staff channel'
     }
 ];
 
@@ -33,12 +37,21 @@ client.once('ready', async () => {
         console.log('Started refreshing application (/) commands.');
         const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
         
-        await rest.put(
-            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-            { body: commands }
-        );
-        
-        console.log('Successfully reloaded application (/) commands.');
+        // Try guild-specific first, fallback to global
+        try {
+            await rest.put(
+                Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+                { body: commands }
+            );
+            console.log('Successfully reloaded guild application (/) commands.');
+        } catch (guildError) {
+            console.log('Guild command deployment failed, trying global deployment...');
+            await rest.put(
+                Routes.applicationCommands(process.env.CLIENT_ID),
+                { body: commands }
+            );
+            console.log('Successfully reloaded global application (/) commands.');
+        }
     } catch (error) {
         console.error('Error deploying commands:', error);
     }
@@ -56,6 +69,13 @@ client.on('interactionCreate', async interaction => {
         if (interaction.isCommand() && interaction.commandName === 'disclaimer') {
             const disclaimerCommand = require('./commands/disclaimer.js');
             await disclaimerCommand.execute(interaction);
+            return;
+        }
+
+        // Handle /closeticket command
+        if (interaction.isCommand() && interaction.commandName === 'closeticket') {
+            const closeticketCommand = require('./commands/closeticket.js');
+            await closeticketCommand.execute(interaction);
             return;
         }
 
@@ -561,8 +581,15 @@ client.on('interactionCreate', async interaction => {
     } catch (error) {
         console.error('Error handling interaction:', error);
         try {
+            // Check if interaction has already been replied to or deferred
             if (!interaction.replied && !interaction.deferred) {
                 await interaction.reply({
+                    content: 'An error occurred while processing your request. Please try again.',
+                    ephemeral: true
+                });
+            } else {
+                // If already replied, send a follow-up
+                await interaction.followUp({
                     content: 'An error occurred while processing your request. Please try again.',
                     ephemeral: true
                 });

@@ -161,10 +161,12 @@ module.exports = {
             
             if (parts.length < 7) {
                 console.error('Invalid custom ID format:', interaction.customId);
-                await interaction.reply({
-                    content: 'Invalid ticket format. Please try again.',
-                    ephemeral: true
-                });
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({
+                        content: 'Invalid ticket format. Please try again.',
+                        ephemeral: true
+                    });
+                }
                 return;
             }
             
@@ -180,10 +182,12 @@ module.exports = {
 
             if (!skill) {
                 console.error('Skill not found:', skillName);
-                await interaction.reply({
-                    content: 'Invalid skill selected. Please try again.',
-                    ephemeral: true
-                });
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({
+                        content: 'Invalid skill selected. Please try again.',
+                        ephemeral: true
+                    });
+                }
                 return;
             }
 
@@ -199,10 +203,17 @@ module.exports = {
             await createServiceTicket(interaction, ticketContent);
         } catch (error) {
             console.error('Error creating skilling ticket:', error);
-            await interaction.reply({
-                content: 'An error occurred while creating your ticket. Please try again.',
-                ephemeral: true
-            });
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: 'An error occurred while creating your ticket. Please try again.',
+                    ephemeral: true
+                });
+            } else {
+                await interaction.followUp({
+                    content: 'An error occurred while creating your ticket. Please try again.',
+                    ephemeral: true
+                });
+            }
         }
     }
 };

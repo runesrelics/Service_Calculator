@@ -55,11 +55,14 @@ async function createServiceTicket(interaction, content) {
                 timestamp: new Date()
             };
 
-            await interaction.reply({
-                content: '**Service Request Created!**\nA staff member will contact you shortly.',
-                embeds: [embed],
-                ephemeral: true
-            });
+            // Check if interaction has already been replied to
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '**Service Request Created!**\nA staff member will contact you shortly.',
+                    embeds: [embed],
+                    ephemeral: true
+                });
+            }
             return;
         }
 
@@ -148,18 +151,34 @@ async function createServiceTicket(interaction, content) {
         // Send the disclaimer message
         await channel.send('**PLEASE NOTE:** Prices may vary dependant on what service you require. We first need to gather more precise details before providing you with a final quote. All prices stated in the calculator are to be used as an approximate guide only.');
 
-        // Send confirmation to user
-        await interaction.reply({
-            content: `Your ticket has been created in ${channel}!`,
-            ephemeral: true
-        });
+        // Send confirmation to user - check if interaction has already been replied to
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: `Your ticket has been created in ${channel}!`,
+                ephemeral: true
+            });
+        } else {
+            // If already replied, send a follow-up
+            await interaction.followUp({
+                content: `Your ticket has been created in ${channel}!`,
+                ephemeral: true
+            });
+        }
 
     } catch (error) {
         console.error('Error creating ticket:', error);
-        await interaction.reply({
-            content: 'There was an error creating your ticket. Please try again or contact an administrator.',
-            ephemeral: true
-        });
+        // Check if interaction has already been replied to before trying to reply
+        if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: 'There was an error creating your ticket. Please try again or contact an administrator.',
+                ephemeral: true
+            });
+        } else {
+            await interaction.followUp({
+                content: 'There was an error creating your ticket. Please try again or contact an administrator.',
+                ephemeral: true
+            });
+        }
     }
 }
 

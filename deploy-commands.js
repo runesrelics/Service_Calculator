@@ -9,6 +9,10 @@ const commands = [
     {
         name: 'disclaimer',
         description: 'Posts the service disclaimer with agree/disagree buttons (Admin/Moderator only)'
+    },
+    {
+        name: 'closeticket',
+        description: 'Closes a ticket, archives it, and sends transcript to user and staff channel'
     }
 ];
 
