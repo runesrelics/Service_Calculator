@@ -1,0 +1,168 @@
+// Function to format GP values
+function formatGP(amount) {
+    if (amount >= 1000000) {
+        return `${Math.floor(amount / 1000000)}M`;
+    } else if (amount >= 1000) {
+        return `${Math.floor(amount / 1000)}K`;
+    }
+    return amount.toString();
+}
+
+async function createServiceTicket(interaction, content) {
+    try {
+        const guild = interaction.guild;
+        
+        // Try to find the tickets category by name if environment variable is not set
+        let ticketsCategory = guild.channels.cache.get(process.env.TICKETS_CATEGORY_ID);
+        
+        if (!ticketsCategory) {
+            // Try to find by name
+            ticketsCategory = guild.channels.cache.find(channel => 
+                channel.name.toLowerCase().includes('ticket') && 
+                channel.type === 4 // Category type
+            );
+        }
+        
+        if (!ticketsCategory) {
+            // If no category found, create a simple embed response instead
+            const embed = {
+                title: 'Service Request',
+                color: 0x0099ff,
+                fields: [
+                    {
+                        name: 'Service Type',
+                        value: content.type,
+                        inline: true
+                    },
+                    {
+                        name: 'Customer',
+                        value: interaction.user.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'Price',
+                        value: content.type === 'Skilling' 
+                            ? `$${content.price.toFixed(2)} USD${content.discount ? ` (${(content.discount * 100).toFixed(0)}% discount applied)` : ''}`
+                            : `$${content.price.toFixed(2)} USD${content.discount ? ` (${(content.discount * 100).toFixed(0)}% discount applied)` : ''}`,
+                        inline: true
+                    },
+                    {
+                        name: 'Details',
+                        value: content.details,
+                        inline: false
+                    }
+                ],
+                timestamp: new Date()
+            };
+
+            await interaction.reply({
+                content: '**Service Request Created!**\nA staff member will contact you shortly.',
+                embeds: [embed],
+                ephemeral: true
+            });
+            return;
+        }
+
+        // Create ticket channel name
+        const username = interaction.user.username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        let serviceName = '';
+        
+        if (content.type === 'Skilling') {
+            serviceName = content.skill || 'Skilling';
+        } else if (content.type === 'Diary') {
+            serviceName = 'Diaries';
+        } else if (content.type === 'Quests') {
+            serviceName = 'Quests';
+        } else if (content.type === 'Minigames') {
+            serviceName = 'Minigames';
+        } else if (content.type === 'Bossing') {
+            serviceName = 'Bossing';
+        } else {
+            serviceName = content.type;
+        }
+        
+        const channelName = `${username}-${serviceName}`;
+
+        // Create the channel
+        const channel = await guild.channels.create({
+            name: channelName,
+            type: 0, // GUILD_TEXT
+            parent: ticketsCategory,
+            permissionOverwrites: [
+                {
+                    id: guild.id, // @everyone role
+                    deny: ['ViewChannel']
+                },
+                {
+                    id: interaction.user.id,
+                    allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+                }
+            ].concat(
+                // Add permissions for Admin and Moderator roles if they exist
+                ['Admin', 'Moderator']
+                    .map(roleName => {
+                        const role = guild.roles.cache.find(r => r.name === roleName);
+                        return role ? {
+                            id: role.id,
+                            allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+                        } : null;
+                    })
+                    .filter(Boolean) // Remove null entries
+            )
+        });
+
+        // Create ticket content embed
+        const embed = {
+            title: 'Service Request',
+            color: 0x0099ff,
+            fields: [
+                {
+                    name: 'Service Type',
+                    value: content.type,
+                    inline: true
+                },
+                {
+                    name: 'Customer',
+                    value: interaction.user.toString(),
+                    inline: true
+                },
+                {
+                    name: 'Price',
+                    value: content.type === 'Skilling' 
+                        ? `$${content.price.toFixed(2)} USD${content.discount ? ` (${(content.discount * 100).toFixed(0)}% discount applied)` : ''}`
+                        : `$${content.price.toFixed(2)} USD${content.discount ? ` (${(content.discount * 100).toFixed(0)}% discount applied)` : ''}`,
+                    inline: true
+                },
+                {
+                    name: 'Details',
+                    value: content.details,
+                    inline: false
+                }
+            ],
+            timestamp: new Date()
+        };
+
+        // Send the initial message in the ticket channel
+        await channel.send({ embeds: [embed] });
+        
+        // Send the disclaimer message
+        await channel.send('**PLEASE NOTE:** Prices may vary dependant on what service you require. We first need to gather more precise details before providing you with a final quote. All prices stated in the calculator are to be used as an approximate guide only.');
+
+        // Send confirmation to user
+        await interaction.reply({
+            content: `Your ticket has been created in ${channel}!`,
+            ephemeral: true
+        });
+
+    } catch (error) {
+        console.error('Error creating ticket:', error);
+        await interaction.reply({
+            content: 'There was an error creating your ticket. Please try again or contact an administrator.',
+            ephemeral: true
+        });
+    }
+}
+
+module.exports = {
+    createServiceTicket
+};
