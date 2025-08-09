@@ -9,21 +9,23 @@ function formatGP(amount) {
 }
 
 async function createServiceTicket(interaction, content) {
+    // Check if this function has already been called for this interaction
+    if (interaction._ticketCreated) {
+        console.log('Ticket already created for this interaction, skipping');
+        return;
+    }
+
+    // Mark this interaction as having a ticket created
+    interaction._ticketCreated = true;
+
     try {
         // Check if interaction has already been replied to
         if (interaction.replied || interaction.deferred) {
-            console.log('Interaction already acknowledged, skipping ticket creation');
+            console.log('Interaction already acknowledged in createServiceTicket, skipping ticket creation');
             return;
         }
 
-        // Check if this function has already been called for this interaction
-        if (interaction._ticketCreated) {
-            console.log('Ticket already created for this interaction, skipping');
-            return;
-        }
-
-        // Mark this interaction as having a ticket created
-        interaction._ticketCreated = true;
+        console.log('Creating ticket for:', content.type, content.skill);
 
         const guild = interaction.guild;
         
@@ -182,17 +184,16 @@ async function createServiceTicket(interaction, content) {
 
     } catch (error) {
         console.error('Error creating ticket:', error);
-        // Check if interaction has already been replied to before trying to reply
+        // Only try to reply if we haven't already
         if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({
-                content: 'There was an error creating your ticket. Please try again or contact an administrator.',
-                ephemeral: true
-            });
-        } else {
-            await interaction.followUp({
-                content: 'There was an error creating your ticket. Please try again or contact an administrator.',
-                ephemeral: true
-            });
+            try {
+                await interaction.reply({
+                    content: 'There was an error creating your ticket. Please try again or contact an administrator.',
+                    ephemeral: true
+                });
+            } catch (replyError) {
+                console.error('Error sending error reply:', replyError);
+            }
         }
     }
 }

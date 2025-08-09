@@ -155,6 +155,18 @@ module.exports = {
     // Handle ticket creation
     async handleTicketCreation(interaction) {
         try {
+            // Check if interaction has already been replied to
+            if (interaction.replied || interaction.deferred) {
+                console.log('Interaction already acknowledged in handleTicketCreation, skipping');
+                return;
+            }
+
+            // Check if ticket has already been created for this interaction
+            if (interaction._ticketCreated) {
+                console.log('Ticket already created for this interaction in handleTicketCreation, skipping');
+                return;
+            }
+
             // Parse the custom ID correctly: create_ticket_skillName_currentLevel_targetLevel_serviceType_discountedCost
             const parts = interaction.customId.split('_');
             console.log('Custom ID parts:', parts); // Debug logging
