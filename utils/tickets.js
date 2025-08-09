@@ -181,17 +181,9 @@ async function createServiceTicket(interaction, content) {
                 });
             } catch (replyError) {
                 console.error('Error replying to interaction:', replyError);
-                // If reply fails, try followUp
-                try {
-                    await interaction.followUp({
-                        content: `Your ticket has been created in ${channel}!`,
-                        ephemeral: true
-                    });
-                } catch (followUpError) {
-                    console.error('Error sending followUp:', followUpError);
-                }
+                // Don't try followUp if reply failed - the interaction might be invalid
             }
-        } else {
+        } else if (interaction.replied) {
             // If already replied, send a follow-up
             try {
                 await interaction.followUp({

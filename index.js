@@ -593,7 +593,7 @@ client.on('interactionCreate', async interaction => {
                     content: 'An error occurred while processing your request. Please try again.',
                     ephemeral: true
                 });
-            } else {
+            } else if (interaction.replied) {
                 // If already replied, send a follow-up
                 await interaction.followUp({
                     content: 'An error occurred while processing your request. Please try again.',

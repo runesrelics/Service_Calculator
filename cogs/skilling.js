@@ -232,7 +232,7 @@ module.exports = {
                 } catch (replyError) {
                     console.error('Error replying to interaction:', replyError);
                 }
-            } else {
+            } else if (interaction.replied) {
                 try {
                     await interaction.followUp({
                         content: 'An error occurred while creating your ticket. Please try again.',
