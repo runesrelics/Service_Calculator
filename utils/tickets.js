@@ -183,7 +183,7 @@ async function createServiceTicket(interaction, content) {
                 console.error('Error replying to interaction:', replyError);
             }
         } else {
-            // If interaction has already been acknowledged, just log success
+            // If interaction has already been acknowledged, just log success and don't try to reply
             console.log(`Ticket created successfully in ${channel.name} for user ${interaction.user.tag}`);
         }
 
