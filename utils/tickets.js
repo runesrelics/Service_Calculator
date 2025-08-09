@@ -74,11 +74,15 @@ async function createServiceTicket(interaction, content) {
 
             // Check if interaction has already been replied to
             if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: '**Service Request Created!**\nA staff member will contact you shortly.',
-                    embeds: [embed],
-                    ephemeral: true
-                });
+                try {
+                    await interaction.reply({
+                        content: '**Service Request Created!**\nA staff member will contact you shortly.',
+                        embeds: [embed],
+                        ephemeral: true
+                    });
+                } catch (replyError) {
+                    console.error('Error replying to interaction:', replyError);
+                }
             }
             return;
         }
