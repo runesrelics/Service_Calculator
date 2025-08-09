@@ -172,7 +172,7 @@ async function createServiceTicket(interaction, content) {
         // Send the disclaimer message
         await channel.send('**PLEASE NOTE:** Prices may vary dependant on what service you require. We first need to gather more precise details before providing you with a final quote. All prices stated in the calculator are to be used as an approximate guide only.');
 
-        // Send confirmation to user - check if interaction has already been replied to
+        // Send confirmation to user - only if interaction hasn't been acknowledged yet
         if (!interaction.replied && !interaction.deferred) {
             try {
                 await interaction.reply({
@@ -181,18 +181,10 @@ async function createServiceTicket(interaction, content) {
                 });
             } catch (replyError) {
                 console.error('Error replying to interaction:', replyError);
-                // Don't try followUp if reply failed - the interaction might be invalid
             }
-        } else if (interaction.replied) {
-            // If already replied, send a follow-up
-            try {
-                await interaction.followUp({
-                    content: `Your ticket has been created in ${channel}!`,
-                    ephemeral: true
-                });
-            } catch (followUpError) {
-                console.error('Error sending followUp:', followUpError);
-            }
+        } else {
+            // If interaction has already been acknowledged, just log success
+            console.log(`Ticket created successfully in ${channel.name} for user ${interaction.user.tag}`);
         }
 
     } catch (error) {
@@ -207,6 +199,9 @@ async function createServiceTicket(interaction, content) {
             } catch (replyError) {
                 console.error('Error sending error reply:', replyError);
             }
+        } else {
+            // If interaction has already been acknowledged, just log the error
+            console.error('Error creating ticket (interaction already acknowledged):', error);
         }
     }
 }
