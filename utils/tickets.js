@@ -10,6 +10,21 @@ function formatGP(amount) {
 
 async function createServiceTicket(interaction, content) {
     try {
+        // Check if interaction has already been replied to
+        if (interaction.replied || interaction.deferred) {
+            console.log('Interaction already acknowledged, skipping ticket creation');
+            return;
+        }
+
+        // Check if this function has already been called for this interaction
+        if (interaction._ticketCreated) {
+            console.log('Ticket already created for this interaction, skipping');
+            return;
+        }
+
+        // Mark this interaction as having a ticket created
+        interaction._ticketCreated = true;
+
         const guild = interaction.guild;
         
         // Try to find the tickets category by name if environment variable is not set

@@ -269,8 +269,51 @@ client.on('interactionCreate', async interaction => {
 
         // Handle ticket creation button
         if (interaction.isButton() && interaction.customId.startsWith('create_ticket_')) {
-            await skilling.handleTicketCreation(interaction);
-            return;
+            // Check if this is a skilling ticket (format: create_ticket_skillName_currentLevel_targetLevel_serviceType_discountedCost)
+            const parts = interaction.customId.split('_');
+            if (parts.length >= 7) {
+                console.log('Processing skilling ticket creation:', interaction.customId);
+                await skilling.handleTicketCreation(interaction);
+                return;
+            }
+        }
+
+        // Handle diary ticket creation
+        if (interaction.isButton() && interaction.customId.startsWith('create_diary_ticket_')) {
+            console.log('Diary ticket creation button clicked:', interaction.customId);
+            
+            const parts = interaction.customId.split('_');
+            if (parts.length >= 4) {
+                const diaryKey = parts[3];
+                const totalPrice = parts[4];
+                const diary = require('./data/diaries.js')[diaryKey];
+                
+                if (diary) {
+                    const selection = interaction.client.diarySelections?.[interaction.user.id];
+                    
+                    if (selection && selection.diaryKey === diaryKey) {
+                        let difficultyText = selection.difficulties.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ');
+                        
+                        const ticketContent = {
+                            type: 'Diary',
+                            skill: diary.name,
+                            details: `${diary.name} - ${difficultyText}`,
+                            price: selection.totalPrice,
+                            discount: 0 // No discount for diaries
+                        };
+
+                        // Use the same ticket creation function as skilling
+                        const { createServiceTicket } = require('./utils/tickets.js');
+                        console.log('About to create service ticket...');
+                        await createServiceTicket(interaction, ticketContent);
+                        console.log('Service ticket created successfully!');
+                        
+                        // Clear the selection
+                        delete interaction.client.diarySelections[interaction.user.id];
+                        return;
+                    }
+                }
+            }
         }
 
         // Handle diary difficulty selection
@@ -358,43 +401,6 @@ client.on('interactionCreate', async interaction => {
                     components: [buttons],
                     ephemeral: true
                 });
-            }
-            return;
-        }
-
-        // Handle diary ticket creation (like skilling)
-        if (interaction.isButton() && interaction.customId.startsWith('create_diary_ticket_')) {
-            console.log('Diary ticket creation button clicked:', interaction.customId);
-            const parts = interaction.customId.split('_');
-            const diaryKey = parts[3];
-            const totalPrice = parts[4];
-            
-            const diary = require('./data/diaries.js')[diaryKey];
-            const selection = interaction.client.diarySelections?.[interaction.user.id];
-            
-            if (diary && selection && selection.diaryKey === diaryKey) {
-                console.log('Creating ticket for diary:', diary.name);
-                
-                let difficultyText = selection.difficulties.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ');
-                
-                const ticketContent = {
-                    type: 'Diary',
-                    skill: diary.name,
-                    details: `${diary.name} - ${difficultyText}\nTotal Reward: ${selection.totalReward}`,
-                    price: parseInt(totalPrice),
-                    discount: 0 // No discount for diaries
-                };
-                
-                console.log('Ticket content:', ticketContent);
-
-                // Use the same ticket creation function as skilling
-                const { createServiceTicket } = require('./utils/tickets.js');
-                console.log('About to create service ticket...');
-                await createServiceTicket(interaction, ticketContent);
-                console.log('Service ticket created successfully!');
-                
-                // Clear the selection
-                delete interaction.client.diarySelections[interaction.user.id];
             }
             return;
         }
