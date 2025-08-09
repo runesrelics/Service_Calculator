@@ -170,16 +170,33 @@ async function createServiceTicket(interaction, content) {
 
         // Send confirmation to user - check if interaction has already been replied to
         if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({
-                content: `Your ticket has been created in ${channel}!`,
-                ephemeral: true
-            });
+            try {
+                await interaction.reply({
+                    content: `Your ticket has been created in ${channel}!`,
+                    ephemeral: true
+                });
+            } catch (replyError) {
+                console.error('Error replying to interaction:', replyError);
+                // If reply fails, try followUp
+                try {
+                    await interaction.followUp({
+                        content: `Your ticket has been created in ${channel}!`,
+                        ephemeral: true
+                    });
+                } catch (followUpError) {
+                    console.error('Error sending followUp:', followUpError);
+                }
+            }
         } else {
             // If already replied, send a follow-up
-            await interaction.followUp({
-                content: `Your ticket has been created in ${channel}!`,
-                ephemeral: true
-            });
+            try {
+                await interaction.followUp({
+                    content: `Your ticket has been created in ${channel}!`,
+                    ephemeral: true
+                });
+            } catch (followUpError) {
+                console.error('Error sending followUp:', followUpError);
+            }
         }
 
     } catch (error) {

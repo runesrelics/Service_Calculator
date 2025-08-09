@@ -174,10 +174,14 @@ module.exports = {
             if (parts.length < 7) {
                 console.error('Invalid custom ID format:', interaction.customId);
                 if (!interaction.replied && !interaction.deferred) {
-                    await interaction.reply({
-                        content: 'Invalid ticket format. Please try again.',
-                        ephemeral: true
-                    });
+                    try {
+                        await interaction.reply({
+                            content: 'Invalid ticket format. Please try again.',
+                            ephemeral: true
+                        });
+                    } catch (replyError) {
+                        console.error('Error replying to interaction:', replyError);
+                    }
                 }
                 return;
             }
@@ -195,10 +199,14 @@ module.exports = {
             if (!skill) {
                 console.error('Skill not found:', skillName);
                 if (!interaction.replied && !interaction.deferred) {
-                    await interaction.reply({
-                        content: 'Invalid skill selected. Please try again.',
-                        ephemeral: true
-                    });
+                    try {
+                        await interaction.reply({
+                            content: 'Invalid skill selected. Please try again.',
+                            ephemeral: true
+                        });
+                    } catch (replyError) {
+                        console.error('Error replying to interaction:', replyError);
+                    }
                 }
                 return;
             }
@@ -216,15 +224,23 @@ module.exports = {
         } catch (error) {
             console.error('Error creating skilling ticket:', error);
             if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: 'An error occurred while creating your ticket. Please try again.',
-                    ephemeral: true
-                });
+                try {
+                    await interaction.reply({
+                        content: 'An error occurred while creating your ticket. Please try again.',
+                        ephemeral: true
+                    });
+                } catch (replyError) {
+                    console.error('Error replying to interaction:', replyError);
+                }
             } else {
-                await interaction.followUp({
-                    content: 'An error occurred while creating your ticket. Please try again.',
-                    ephemeral: true
-                });
+                try {
+                    await interaction.followUp({
+                        content: 'An error occurred while creating your ticket. Please try again.',
+                        ephemeral: true
+                    });
+                } catch (followUpError) {
+                    console.error('Error sending followUp:', followUpError);
+                }
             }
         }
     }
